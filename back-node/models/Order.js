@@ -14,15 +14,7 @@ const OrderSchema = new mongoose.Schema(
       },
     ],
 
-    address: {
-      fullName: String,
-      phone: String,
-      pincode: String,
-      addressLine: String,
-      city: String,
-      state: String,
-    },
-
+   
     totalAmount: Number,
     paymentStatus: { type: String, default: "pending" },
     orderStatus: { type: String, default: "processing" },

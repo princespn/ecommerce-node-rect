@@ -5,6 +5,8 @@ import Register from "./pages/users/Register";
 import ProductList from "././pages/products/Prosucts";
 import CartList from "./pages/carts/Carts";
 import Checkout from "./pages/carts/CheckoutPage";
+import OrderPage from "./pages/orders/OrderPage";
+
 
 
 
@@ -18,6 +20,7 @@ function App() {
         <Route path="/products/:categoryId" element={<ProductList />} />
         <Route path="/carts" element={<CartList />} />
         <Route path="/checkouts" element={<Checkout/>} />
+        <Route path="/orders" element={<OrderPage/>} />
       </Routes>
     </BrowserRouter>
   );

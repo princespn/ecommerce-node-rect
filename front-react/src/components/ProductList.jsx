@@ -1,12 +1,27 @@
 import React, { useEffect, useState } from "react";
 import api from "../api/axios";
-import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
+// Generate or get guest user id
+const getUserId = () => {
+  let user = localStorage.getItem("user_id");
+  let guest = localStorage.getItem("guest_id");
+
+  if (user) return user;
+
+  if (!guest) {
+    const newGuestId = Date.now().toString();
+    localStorage.setItem("guest_id", newGuestId);
+    return newGuestId;
+  }
+
+  return guest;
+};
 
 const ProductList = () => {
-  const { categoryId } = useParams(); // categoryId = routeName
+  const { categoryId } = useParams();
   const [products, setProducts] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api
@@ -21,30 +36,29 @@ const ProductList = () => {
       .catch((err) => console.error("Error fetching products:", err));
   }, [categoryId]);
 
-  const navigate = useNavigate();
-
   const handleAddToCart = async (item) => {
     try {
+      const userId = getUserId(); // dynamic user OR guest ID
+
       const payload = {
-        user_id: "12345", // later replace with auth userId
+        user_id: userId,
         product: {
-            product_id: item._id,
+          product_id: item._id,
           name: item.name,
           price: Number(item.price),
           imageUrl: item.imageUrl,
-          quantity: 1
-        }
+          quantity: 1,
+        },
       };
-  
+
       await api.post("/cart/add", payload);
-  
-      navigate("/carts"); // go to cart page
-  
+
+      navigate("/carts");
     } catch (error) {
       console.error("Add to cart failed", error);
     }
   };
-  
+
   return (
     <section className="py-8 px-6 bg-gray-50">
       <h2 className="text-3xl font-bold mb-6 text-center">

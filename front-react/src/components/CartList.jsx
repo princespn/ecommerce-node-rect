@@ -2,8 +2,24 @@ import React, { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
+// Get Logged-in or Guest User ID
+const getUserId = () => {
+  let user = localStorage.getItem("user_id");
+  let guest = localStorage.getItem("guest_id");
+
+  if (user) return user;
+
+  if (!guest) {
+    const newGuest = Date.now().toString();
+    localStorage.setItem("guest_id", newGuest);
+    return newGuest;
+  }
+
+  return guest;
+};
+
 const CartList = () => {
-  const userId = "12345"; // your logged-in user ID
+  const userId = getUserId();
   const [cart, setCart] = useState([]);
   const navigate = useNavigate();
 
@@ -27,6 +43,17 @@ const CartList = () => {
     api
       .delete("/cart/remove", { data: { user_id: userId, product_id } })
       .then(() => loadCart());
+  };
+
+  const handleCheckout = () => {
+    const loggedInUser = localStorage.getItem("user_id");
+
+    if (!loggedInUser) {
+      // user not logged in → redirect to login
+      navigate("/login");
+    } else {
+      navigate("/checkouts");
+    }
   };
 
   return (
@@ -55,18 +82,17 @@ const CartList = () => {
                   <img
                     src={item.imageUrl}
                     className="w-20 h-20 object-cover rounded"
+                    alt=""
                   />
 
                   <div>
                     <h3 className="font-semibold">{item.name}</h3>
                     <p>₹{item.price}</p>
 
-                    {/* Quantity buttons */}
+                    {/* Quantity Handling */}
                     <div className="flex items-center gap-3 mt-3">
                       <button
-                        onClick={() =>
-                          updateQuantity(item.product_id, "dec")
-                        }
+                        onClick={() => updateQuantity(item.product_id, "dec")}
                         className="px-3 py-1 bg-gray-300 text-black rounded"
                       >
                         -
@@ -75,9 +101,7 @@ const CartList = () => {
                       <span className="text-lg">{item.quantity}</span>
 
                       <button
-                        onClick={() =>
-                          updateQuantity(item.product_id, "inc")
-                        }
+                        onClick={() => updateQuantity(item.product_id, "inc")}
                         className="px-3 py-1 bg-gray-300 text-black rounded"
                       >
                         +
@@ -86,7 +110,6 @@ const CartList = () => {
                   </div>
                 </div>
 
-                {/* Delete button */}
                 <button
                   onClick={() => removeItem(item.product_id)}
                   className="bg-red-600 text-white px-4 py-2 rounded h-fit"
@@ -97,7 +120,7 @@ const CartList = () => {
             ))}
           </div>
 
-          {/* Continue shopping */}
+          {/* Buttons */}
           <div className="mt-8 text-center">
             <button
               onClick={() => navigate("/")}
@@ -107,7 +130,7 @@ const CartList = () => {
             </button>
 
             <button
-              onClick={() => navigate("/checkout")}
+              onClick={handleCheckout}
               className="bg-green-600 text-white px-6 py-3 rounded-lg"
             >
               Checkout

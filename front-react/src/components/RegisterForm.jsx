@@ -1,9 +1,14 @@
 import React, { useState } from "react";
-import { register } from "../api/auth"; // ✅ your function file
-import { useNavigate } from "react-router-dom";
+import { register } from "../api/auth";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const RegisterForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect back to previous or default home
+  const redirectPath = location.state?.from || "/";
+
   const [formData, setFormData] = useState({
     fullname: "",
     mobile: "",
@@ -29,11 +34,13 @@ const RegisterForm = () => {
 
     try {
       const res = await register(formData);
+
       alert("Registration Successful!");
-      console.log(res);
-      navigate("/login"); // redirect after register success
+
+      // After registration → go to login page
+      navigate("/login", { state: { from: redirectPath } });
+
     } catch (err) {
-      console.error(err);
       alert(err.response?.data?.message || "Registration failed!");
     }
   };
@@ -100,6 +107,19 @@ const RegisterForm = () => {
       >
         Register
       </button>
+
+      {/* Login Link */}
+      <p className="text-center text-sm mt-2">
+        Already have an account?{" "}
+        <span
+          onClick={() =>
+            navigate("/login", { state: { from: redirectPath } })
+          }
+          className="text-blue-600 font-medium cursor-pointer hover:underline"
+        >
+          Login here
+        </span>
+      </p>
     </form>
   );
 };

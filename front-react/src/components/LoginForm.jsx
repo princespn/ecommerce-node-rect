@@ -1,21 +1,27 @@
 import React, { useState } from "react";
-import { login } from "../api/auth"; 
-import { useNavigate } from "react-router-dom";
+import { login } from "../api/auth";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // If user came from checkout page → return there after login
+  const redirectPath = location.state?.from || "/";
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleLogin = async (e) => {
@@ -25,18 +31,22 @@ const LoginForm = () => {
 
     try {
       const res = await login(formData);
-      alert("Login Successful!");
-      console.log("✅ User Data:", res);
 
-      // Example: store token if backend returns one
+      // Save User + Token
+      if (res.user) {
+        localStorage.setItem("user", JSON.stringify(res.user));
+      }
       if (res.token) {
         localStorage.setItem("token", res.token);
       }
 
-      navigate("/"); // redirect to home after login success
+      alert("Login Successful!");
+
+      // Redirect after login
+      navigate(redirectPath);
+
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || "Login Failed!");
+      setError(err.response?.data?.message || "Invalid Email or Password!");
     } finally {
       setLoading(false);
     }
@@ -77,6 +87,19 @@ const LoginForm = () => {
       >
         {loading ? "Logging in..." : "Login"}
       </button>
+
+      {/* Registration Link */}
+      <p className="text-center text-sm mt-2">
+        Don't have an account?{" "}
+        <span
+          onClick={() =>
+            navigate("/register", { state: { from: redirectPath } })
+          }
+          className="text-blue-600 font-medium cursor-pointer hover:underline"
+        >
+          Register here
+        </span>
+      </p>
     </form>
   );
 };
