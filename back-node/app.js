@@ -22,9 +22,11 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ Routes placeholder (uncomment when routes ready)
 import productRoute from "./routes/product.js";
 import cartRoute from "./routes/cart.js"
+import orderRoute from "./routes/order.js"
 import authRoute from "./routes/auth.js";
 app.use("/api/v1/list", productRoute);
 app.use("/api/v1", cartRoute);
+app.use("/api/v1/orders", orderRoute);
 app.use("/api/v1/user", authRoute);
 
 

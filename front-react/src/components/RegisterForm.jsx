@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { register } from "../api/auth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 const RegisterForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect back to previous or default home
-  const redirectPath = location.state?.from || "/";
+  // Redirect path (if coming from checkout/order)
+  const redirectPath = location.state?.from || "/order";
 
   const [formData, setFormData] = useState({
     fullname: "",
@@ -17,110 +17,135 @@ const RegisterForm = () => {
     confirm_password: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
 
     if (formData.password !== formData.confirm_password) {
-      alert("Passwords do not match!");
+      setErrorMsg("Passwords do not match!");
       return;
     }
 
+    if (formData.mobile.length !== 10) {
+      setErrorMsg("Mobile number must be 10 digits.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const res = await register(formData);
+      await register(formData);
 
-      alert("Registration Successful!");
-
-      // After registration → go to login page
+      // Redirect to login page and pass the return path
       navigate("/login", { state: { from: redirectPath } });
 
     } catch (err) {
-      alert(err.response?.data?.message || "Registration failed!");
+      setErrorMsg(err.response?.data?.message || "Registration failed!");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleRegister} className="space-y-4">
-      <h3 className="text-xl font-bold text-center mb-2">Register</h3>
+    <section className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
+      <div className="bg-white w-full max-w-md p-8 rounded-xl shadow">
 
-      <input
-        type="text"
-        name="fullname"
-        placeholder="Full Name"
-        value={formData.fullname}
-        onChange={handleChange}
-        className="w-full border px-3 py-2 rounded"
-        required
-      />
+        <h2 className="text-3xl font-bold text-center mb-6">Create Account</h2>
 
-      <input
-        type="tel"
-        name="mobile"
-        placeholder="Mobile Number"
-        value={formData.mobile}
-        onChange={handleChange}
-        className="w-full border px-3 py-2 rounded"
-        pattern="[0-9]{10}"
-        title="Enter valid 10-digit number"
-        required
-      />
+        {/* Error Message */}
+        {errorMsg && (
+          <p className="bg-red-100 text-red-600 text-center p-2 rounded mb-4">
+            {errorMsg}
+          </p>
+        )}
 
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={handleChange}
-        className="w-full border px-3 py-2 rounded"
-        required
-      />
+        <form onSubmit={handleRegister} className="space-y-4">
 
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={formData.password}
-        onChange={handleChange}
-        className="w-full border px-3 py-2 rounded"
-        required
-      />
+          <input
+            type="text"
+            name="fullname"
+            placeholder="Full Name"
+            value={formData.fullname}
+            onChange={handleChange}
+            className="w-full border px-3 py-3 rounded focus:outline-blue-500"
+            required
+          />
 
-      <input
-        type="password"
-        name="confirm_password"
-        placeholder="Confirm Password"
-        value={formData.confirm_password}
-        onChange={handleChange}
-        className="w-full border px-3 py-2 rounded"
-        required
-      />
+          <input
+            type="tel"
+            name="mobile"
+            placeholder="Mobile Number (10 digits)"
+            value={formData.mobile}
+            onChange={handleChange}
+            className="w-full border px-3 py-3 rounded focus:outline-blue-500"
+            maxLength={10}
+            required
+          />
 
-      <button
-        type="submit"
-        className="bg-green-600 text-white w-full py-2 rounded hover:bg-green-700"
-      >
-        Register
-      </button>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full border px-3 py-3 rounded focus:outline-blue-500"
+            required
+          />
 
-      {/* Login Link */}
-      <p className="text-center text-sm mt-2">
-        Already have an account?{" "}
-        <span
-          onClick={() =>
-            navigate("/login", { state: { from: redirectPath } })
-          }
-          className="text-blue-600 font-medium cursor-pointer hover:underline"
-        >
-          Login here
-        </span>
-      </p>
-    </form>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full border px-3 py-3 rounded focus:outline-blue-500"
+            required
+          />
+
+          <input
+            type="password"
+            name="confirm_password"
+            placeholder="Confirm Password"
+            value={formData.confirm_password}
+            onChange={handleChange}
+            className="w-full border px-3 py-3 rounded focus:outline-blue-500"
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 rounded text-white font-medium 
+              ${loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}
+          >
+            {loading ? "Registering..." : "Register"}
+          </button>
+        </form>
+
+        {/* Login Link */}
+        <p className="text-center text-sm mt-4 text-gray-700">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            state={{ from: redirectPath }}
+            className="text-blue-600 font-semibold hover:underline"
+          >
+            Login here
+          </Link>
+        </p>
+
+      </div>
+    </section>
   );
 };
 

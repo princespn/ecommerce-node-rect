@@ -11,6 +11,6 @@ const connectDB = async () => {
   }
 };
 
-//mongoose.connection.createCollection("carts");
+//mongoose.connection.createCollection("users");
 
 export default connectDB;

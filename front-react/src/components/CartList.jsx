@@ -2,27 +2,26 @@ import React, { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
-// Get Logged-in or Guest User ID
+// FUNCTION: Get Logged-in user OR create guest ID
 const getUserId = () => {
-  let user = localStorage.getItem("user_id");
+  const loggedUser = localStorage.getItem("user_id");
+  if (loggedUser) return loggedUser;
+
   let guest = localStorage.getItem("guest_id");
-
-  if (user) return user;
-
   if (!guest) {
-    const newGuest = Date.now().toString();
-    localStorage.setItem("guest_id", newGuest);
-    return newGuest;
+    guest = "guest_" + Date.now();
+    localStorage.setItem("guest_id", guest);
   }
-
   return guest;
 };
 
 const CartList = () => {
-  const userId = getUserId();
-  const [cart, setCart] = useState([]);
   const navigate = useNavigate();
+  const userId = getUserId();
 
+  const [cart, setCart] = useState([]);
+
+  // Load Cart from API
   const loadCart = () => {
     api.get(`/cart/${userId}`).then((res) => {
       setCart(res.data?.items || []);
@@ -33,33 +32,30 @@ const CartList = () => {
     loadCart();
   }, []);
 
+  // Increase / Decrease
   const updateQuantity = (product_id, action) => {
     api
       .post("/cart/update", { user_id: userId, product_id, action })
       .then(() => loadCart());
   };
 
+  // Delete Item
   const removeItem = (product_id) => {
     api
       .delete("/cart/remove", { data: { user_id: userId, product_id } })
       .then(() => loadCart());
   };
 
+  // Checkout Handler — No login needed
   const handleCheckout = () => {
-    const loggedInUser = localStorage.getItem("user_id");
-
-    if (!loggedInUser) {
-      // user not logged in → redirect to login
-      navigate("/login");
-    } else {
-      navigate("/checkouts");
-    }
+    navigate("/checkouts"); // ✔ always go to checkout
   };
 
   return (
     <section className="py-8 px-6">
       <h2 className="text-3xl font-bold mb-6 text-center">Your Cart</h2>
 
+      {/* When cart is empty */}
       {cart.length === 0 ? (
         <div className="text-center">
           <p>Your cart is empty.</p>
@@ -72,6 +68,7 @@ const CartList = () => {
         </div>
       ) : (
         <>
+          {/* Cart Items */}
           <div className="space-y-4">
             {cart.map((item) => (
               <div
@@ -89,10 +86,12 @@ const CartList = () => {
                     <h3 className="font-semibold">{item.name}</h3>
                     <p>₹{item.price}</p>
 
-                    {/* Quantity Handling */}
+                    {/* Quantity Update */}
                     <div className="flex items-center gap-3 mt-3">
                       <button
-                        onClick={() => updateQuantity(item.product_id, "dec")}
+                        onClick={() =>
+                          updateQuantity(item.product_id, "dec")
+                        }
                         className="px-3 py-1 bg-gray-300 text-black rounded"
                       >
                         -
@@ -101,7 +100,9 @@ const CartList = () => {
                       <span className="text-lg">{item.quantity}</span>
 
                       <button
-                        onClick={() => updateQuantity(item.product_id, "inc")}
+                        onClick={() =>
+                          updateQuantity(item.product_id, "inc")
+                        }
                         className="px-3 py-1 bg-gray-300 text-black rounded"
                       >
                         +

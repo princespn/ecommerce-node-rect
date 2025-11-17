@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { login } from "../api/auth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // If user came from checkout page → return there after login
-  const redirectPath = location.state?.from || "/";
+  // Get redirect path (if coming from checkout)
+  const redirectPath = location.state?.from || "/order";
 
   const [formData, setFormData] = useState({
     email: "",
@@ -32,7 +32,7 @@ const LoginForm = () => {
     try {
       const res = await login(formData);
 
-      // Save User + Token
+      // Store auth data
       if (res.user) {
         localStorage.setItem("user", JSON.stringify(res.user));
       }
@@ -40,10 +40,8 @@ const LoginForm = () => {
         localStorage.setItem("token", res.token);
       }
 
-      alert("Login Successful!");
-
-      // Redirect after login
-      navigate(redirectPath);
+      // Redirect to previous or order page
+      navigate(redirectPath, { replace: true });
 
     } catch (err) {
       setError(err.response?.data?.message || "Invalid Email or Password!");
@@ -53,54 +51,71 @@ const LoginForm = () => {
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
-      <h3 className="text-xl font-bold text-center mb-2">Login</h3>
+    <section className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
+      <div className="bg-white w-full max-w-md p-8 rounded-xl shadow">
 
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={handleChange}
-        className="w-full border px-3 py-2 rounded"
-        required
-      />
+        <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
 
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={formData.password}
-        onChange={handleChange}
-        className="w-full border px-3 py-2 rounded"
-        required
-      />
+        {error && (
+          <p className="bg-red-100 text-red-600 p-2 rounded mb-4 text-center">
+            {error}
+          </p>
+        )}
 
-      {error && <div className="text-red-600 text-center">{error}</div>}
+        <form onSubmit={handleLogin}>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className={`bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700 ${
-          loading ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-      >
-        {loading ? "Logging in..." : "Login"}
-      </button>
+          {/* Email */}
+          <div className="mb-4">
+            <label className="block font-medium mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full border p-3 rounded focus:outline-blue-500"
+              placeholder="Enter email"
+            />
+          </div>
 
-      {/* Registration Link */}
-      <p className="text-center text-sm mt-2">
-        Don't have an account?{" "}
-        <span
-          onClick={() =>
-            navigate("/register", { state: { from: redirectPath } })
-          }
-          className="text-blue-600 font-medium cursor-pointer hover:underline"
-        >
-          Register here
-        </span>
-      </p>
-    </form>
+          {/* Password */}
+          <div className="mb-4">
+            <label className="block font-medium mb-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full border p-3 rounded focus:outline-blue-500"
+              placeholder="Enter password"
+            />
+          </div>
+
+          {/* Login Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 rounded text-white 
+              ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        {/* Register Link */}
+        <p className="text-center mt-4 text-gray-700">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            state={{ from: redirectPath }}
+            className="text-blue-600 font-semibold"
+          >
+            Register Now
+          </Link>
+        </p>
+      </div>
+    </section>
   );
 };
 

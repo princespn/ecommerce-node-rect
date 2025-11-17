@@ -8,20 +8,24 @@ const Checkout = () => {
   const [cart, setCart] = useState([]);
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    // ⛔ If no user → redirect to login
-    const savedUser = localStorage.getItem("user");
 
-    if (!savedUser) {
-      navigate("/login");
-      return;
-    }
+const getUserId = () => {
+  const loggedUser = localStorage.getItem("user_id");
+  if (loggedUser) return loggedUser;
 
-    const userData = JSON.parse(savedUser);
-    setUser(userData);
+  let guest = localStorage.getItem("guest_id");
+  if (!guest) {
+    guest = "guest_" + Date.now();
+    localStorage.setItem("guest_id", guest);
+  }
+  return guest;
+};
 
-    // Load cart
-    api.get(`/cart/${userData.id}`).then((res) => {
+const userId = getUserId();
+
+  useEffect(() => { 
+
+    api.get(`/cart/${userId}`).then((res) => {
       setCart(res.data.items || []);
     });
   }, []);
@@ -30,21 +34,33 @@ const Checkout = () => {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const placeOrder = () => {
-    if (!user) {
+    if (!userId) {
       navigate("/login");
       return;
     }
-
+  
     api
-      .post("/order/create", {
-        user_id: user.id,
-        address: "Default address",
+      .post("/create", {
+        user_id: userId,
+        items: cartItems, // from redux/localStorage
+        total: cartTotal,
+        payment_method: paymentMethod, // "cod" or "online"
+        address: {
+          name: user.name,
+          phone: user.phone,
+          addressLine,
+          city,
+          pincode,
+        },
       })
       .then((res) => {
         navigate(`/order-success/${res.data.order_id}`);
+      })
+      .catch((err) => {
+        console.log("Order error:", err);
       });
   };
-
+  
   return (
     <section className="p-6">
       <h2 className="text-3xl font-bold mb-6 text-center">Checkout</h2>

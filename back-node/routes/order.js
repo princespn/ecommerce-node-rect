@@ -1,50 +1,43 @@
 import express from "express";
 import Order from "../models/Order.js";
-import Cart from "../models/Cart.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
-// CREATE ORDER
-router.post("/order/create", async (req, res) => {
-  try {
-    const { user_id, address } = req.body;
+function generateOrderNumber() {
+  return "ORD-" + Math.floor(100000 + Math.random() * 900000).toString();
+}
 
-    const cart = await Cart.findOne({ user_id });
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ error: "Cart is empty" });
+router.post("/create", async (req, res) => {
+  try {
+    const { user_id, items, address, payment_method, total } = req.body;
+
+    // 1️⃣ Check user exists
+    const user = await User.findById(user_id);
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
     }
 
-    const totalAmount = cart.items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-
-    const order = new Order({
+    // 2️⃣ Create new order
+    const newOrder = new Order({
       user_id,
-      items: cart.items,
+      items,
       address,
-      totalAmount,
+      payment_method: payment_method || "cod",
+      total,
+      order_number: generateOrderNumber(),
     });
 
-    await order.save();
+    await newOrder.save();
 
-    // Clear cart after order
-    await Cart.findOneAndDelete({ user_id });
-
-    res.json({
-      message: "Order created",
-      order_id: order._id,
-      totalAmount,
+    return res.json({
+      message: "Order created successfully",
+      order_id: newOrder._id,
+      order_number: newOrder.order_number,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
-});
-
-// GET ORDER DETAILS
-router.get("/order/:id", async (req, res) => {
-  const order = await Order.findById(req.params.id);
-  res.json(order);
 });
 
 export default router;

@@ -72,4 +72,27 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
+router.get("/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select(
+      "name email mobile"
+    );
+
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (err) {
+    console.error("Get User Error:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+
 export default router;
